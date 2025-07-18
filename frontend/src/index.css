@@ -1,0 +1,33 @@
+/* src/index.css */
+
+/* Definimos tu paleta de colores y la fuente global */
+:root {
+  --dark-primary: #0D1A12;
+  --primary-green: #52946B;
+  --light-green-bg: #E8F2ED;
+  --accent-green: #38E078;
+  --light-gray: #E5E8EB;
+  --off-white: #F7FAFA;
+  --white: #FFFFFF;
+
+  --font-family-sans: 'Roboto', sans-serif;
+}
+
+/* Reseteo básico y estilos globales */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--off-white);
+  color: var(--dark-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.material-symbols-outlined {
+  vertical-align: bottom; /* Ayuda a alinear los iconos con el texto */
+}
