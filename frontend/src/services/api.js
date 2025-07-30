@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: '/api', 
+  baseURL: 'http://localhost:3001/api', 
 });
 
 // Interceptor para añadir el token a todas las peticiones protegidas

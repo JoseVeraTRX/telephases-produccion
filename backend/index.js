@@ -5,8 +5,7 @@ const cors = require('cors');
 
 // Importamos AMBOS archivos de rutas
 const authRoutes = require('./src/routes/authRoutes');
-const resultsRoutes = require('./src/routes/resultsRoutes'); // <-- AÑADIR ESTA LÍNEA
-
+const resultsRoutes = require('./src/routes/resultsRoutes'); 
 const app = express();
 
 // Middleware
@@ -15,7 +14,7 @@ app.use(express.json());
 
 // Rutas
 app.use('/api/auth', authRoutes);
-app.use('/api/results', resultsRoutes); // <-- AÑADIR ESTA LÍNEA
+app.use('/api/results', resultsRoutes); 
 
 // Ruta de bienvenida para probar que el servidor funciona
 app.get('/', (req, res) => {

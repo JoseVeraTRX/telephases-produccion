@@ -1,7 +1,8 @@
 /* src/pages/Results.css */
+
 .results-page {
   padding: 30px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -39,49 +40,88 @@
   transition: background-color 0.2s;
 }
 .logout-button:hover {
-    background-color: #d1d5d8;
+  background-color: #d1d5d8;
 }
 
 .search-bar {
   display: flex;
-  gap: 10px;
-  margin-bottom: 30px;
+  gap: 12px;
+  margin-bottom: 15px;
+  align-items: center;
 }
 
-.search-bar input {
-  flex-grow: 1;
+/* Estilo para todos los inputs y el select de la barra de búsqueda */
+.search-bar input,
+.search-bar select {
   padding: 12px;
   border: 1px solid var(--light-gray);
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 16px;
   font-family: var(--font-family-sans);
+  background-color: var(--white);
 }
 
-.search-bar button {
-  padding: 0 25px;
+.search-bar .cedula-input {
+  flex-grow: 1; /* El input de la cédula toma el mayor espacio */
+}
+
+.search-button {
+  padding: 12px 25px;
   border: none;
   background-color: var(--primary-green);
   color: var(--white);
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
+  transition: background-color 0.3s;
 }
-.search-bar button:hover {
-    background-color: #457a5a;
+.search-button:hover {
+  background-color: #457a5a;
+}
+
+/* Contenedor para acciones como el botón de descarga */
+.table-actions {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end; /* Alinea el botón a la derecha */
+}
+
+.download-button {
+  padding: 10px 20px;
+  border: 1px solid var(--primary-green);
+  background: var(--white);
+  color: var(--primary-green);
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.download-button:hover {
+  background-color: var(--light-green-bg);
+  color: #3d7051;
+}
+
+.results-container {
+  background: var(--white);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  overflow: hidden; /* Para que los bordes redondeados se apliquen a la tabla */
+  width: 100%;
 }
 
 .results-table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--white);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  border-radius: 8px;
-  overflow: hidden;
 }
 
 .results-table th, .results-table td {
-  padding: 15px;
+  padding: 16px;
   text-align: left;
   border-bottom: 1px solid var(--light-green-bg);
 }
@@ -89,19 +129,94 @@
 .results-table th {
   background-color: var(--off-white);
   font-weight: 500;
+  color: #333;
+}
+
+.results-table td .material-symbols-outlined {
+    font-size: 20px;
+    color: #666;
+    vertical-align: text-bottom;
+    margin-right: 4px;
 }
 
 .results-table tr:last-child td {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .results-table tr:hover {
-    background-color: var(--light-green-bg);
+  background-color: var(--light-green-bg);
 }
 
 .results-message {
-    text-align: center;
-    padding: 40px;
-    color: #777;
-    font-size: 18px;
+  text-align: center;
+  padding: 50px;
+  color: #777;
+  font-size: 18px;
+}
+
+.error-message {
+    color: #D32F2F;
+}
+
+.clear-button {
+  padding: 12px 20px;
+  border: 1px solid #AAA;
+  background: #f0f0f0;
+  color: #333;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-button:hover {
+  background: #e0e0e0;
+  border-color: #888;
+}
+
+/* Estilo para el emoji en la tabla de estado */
+.estado-emoji {
+  font-size: 1.2em; 
+  margin-right: 8px;
+  vertical-align: middle; 
+}
+
+/* Estilo para centrar el contenido en la columna de acciones */
+.actions-cell {
+  text-align: center;
+  width: 1%; /* Evita que la columna sea demasiado ancha */
+}
+
+/* Estilo para el botón del icono, para que no parezca un botón normal */
+.action-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%; /* Lo hace circular */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+/* El icono dentro del botón */
+.action-button .material-symbols-outlined {
+  color: #888;
+  transition: color 0.2s;
+}
+
+/* Efecto al pasar el ratón por encima */
+.action-button:hover {
+  background-color: var(--light-green-bg);
+}
+
+.action-button:hover .material-symbols-outlined {
+  color: var(--primary-green);
+}
+
+.observations-cell {
+  max-width: 300px; /* Un ancho máximo para la columna */
+  white-space: normal; /* Permite que el texto se divida en varias líneas */
+  word-break: break-word; /* Fuerza el corte de palabras largas si es necesario */
 }

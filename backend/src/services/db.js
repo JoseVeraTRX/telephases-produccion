@@ -1,13 +1,12 @@
-// src/services/db.js - VERSIÓN FINAL Y CORRECTA
-
+// src/services/db.js 
 const { Pool } = require('pg');
-require('dotenv').config(); // <-- ¡Muy importante descomentar o añadir esta línea!
+require('dotenv').config(); 
 
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_DATABASE,
-  password: process.env.DB_PASSWORD, // Ahora sí leemos la contraseña
+  password: process.env.DB_PASSWORD, 
   port: process.env.DB_PORT,
 });
 
