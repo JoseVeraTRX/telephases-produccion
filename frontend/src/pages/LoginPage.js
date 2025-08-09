@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import './Login.css';
+import { ReactComponent as Logo } from '../assets/logo-intelicare.svg';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -25,6 +26,9 @@ const LoginPage = () => {
   return (
     <div className="login-container">
       <form className="login-form" onSubmit={handleLogin}>
+        
+        <Logo className="login-logo" />
+        
         <h2 className="login-title">
           <span className="material-symbols-outlined">medical_information</span>
           Portal Telephases

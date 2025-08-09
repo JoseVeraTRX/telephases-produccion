@@ -11,6 +11,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
+  gap: 15px;
 }
 
 .header-title {
@@ -38,6 +39,7 @@
   align-items: center;
   gap: 8px;
   transition: background-color 0.2s;
+  flex-shrink: 0;
 }
 .logout-button:hover {
   background-color: #d1d5d8;
@@ -219,4 +221,61 @@
   max-width: 300px; /* Un ancho máximo para la columna */
   white-space: normal; /* Permite que el texto se divida en varias líneas */
   word-break: break-word; /* Fuerza el corte de palabras largas si es necesario */
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  gap: 20px;
+}
+
+.patient-search-form {
+  display: flex;
+  flex-grow: 1;
+  max-width: 500px;
+}
+.patient-search-form input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  font-size: 16px;
+}
+.patient-search-form button {
+  padding: 0 15px;
+  border: 1px solid #ccc;
+  background-color: #f0f0f0;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 10px;
+}
+.toolbar-actions button {
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  background-color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.toolbar-actions button.active {
+  background-color: var(--primary-green);
+  color: white;
+  border-color: var(--primary-green);
+}
+
+.refresh-button {
+  padding: 8px !important;
+  display: flex;
+  align-items: center;
+}
+
+.header-logo {
+  height: 45px; /* Altura del logo en la cabecera */
+  width: auto;
 }
