@@ -1,8 +1,9 @@
-// src/App.js
+// src/App.js - ACTUALIZADO
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
-import ResultsPage from './pages/ResultsPage'; // Crearemos esta página a continuación
+// Importamos el nuevo nombre de la página ---
+import PatientListPage from './pages/PatientListPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -11,14 +12,14 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route
-          path="/results"
+          path="/results" 
           element={
             <ProtectedRoute>
-              <ResultsPage />
+              {/* ---  Usamos el nuevo componente --- */}
+              <PatientListPage />
             </ProtectedRoute>
           }
         />
-        {/* Redirige cualquier otra ruta a la página de login por defecto */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>

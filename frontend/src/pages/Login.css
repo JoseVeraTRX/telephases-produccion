@@ -79,3 +79,9 @@
     margin-top: 15px;
     font-weight: 500;
 }
+
+.login-logo {
+  height: 60px; /* Ajusta la altura según lo necesites */
+  width: auto;
+  margin-bottom: 25px;
+}
