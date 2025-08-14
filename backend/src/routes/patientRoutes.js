@@ -1,15 +1,25 @@
-// src/routes/patientRoutes.js
+// src/routes/patientRoutes.js - VERSIÓN CORREGIDA Y FINAL
+
 const express = require('express');
 const router = express.Router();
 const patientController = require('../controllers/patientController');
-const authMiddleware = require('../middleware/authMiddleware'); // ¡Reutilizamos nuestro guardián!
+const authMiddleware = require('../middleware/authMiddleware');
 
-// Ruta para obtener la lista de TODOS los pacientes
+// Ruta para que el ADMIN obtenga la lista de TODOS los pacientes
 // GET /api/patients
 router.get('/', authMiddleware, patientController.getAllPatients);
 
-// Ruta para obtener los exámenes de UN paciente específico por su ID
-// GET /api/patients/123e4567-e89b-12d3-a456-426614174000/exams
+// Ruta para que el PACIENTE obtenga sus propios datos
+// GET /api/patients/me
+router.get('/me/dashboard', authMiddleware, patientController.getPatientDashboard);
+router.get('/me/exams', authMiddleware, patientController.getPatientExams);
+
+
+// Ruta para que el ADMIN obtenga los exámenes de CUALQUIER paciente
+// GET /api/patients/:patientId/exams
 router.get('/:patientId/exams', authMiddleware, patientController.getExamsByPatientId);
 
+// Ruta para que el admin registre un nuevo paciente
+// POST /api/patients
+router.post('/', authMiddleware, patientController.registerPatient);
 module.exports = router;

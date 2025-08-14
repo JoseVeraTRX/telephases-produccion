@@ -57,3 +57,55 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };
+
+/**
+ * Maneja el inicio de sesión para los pacientes.
+ * Valida por número de documento y fecha de nacimiento.
+ */
+exports.patientLogin = async (req, res) => {
+  const { numero_documento, fecha_nacimiento } = req.body;
+
+  if (!numero_documento || !fecha_nacimiento) {
+    return res.status(400).json({ message: 'Se requieren el número de documento y la fecha de nacimiento.' });
+  }
+
+  try {
+    // 1. Buscamos al paciente por su número de documento.
+    const userQuery = 'SELECT id, numero_documento, fecha_nacimiento, rol_id FROM usuario WHERE numero_documento = $1 AND activo = TRUE';
+    const { rows } = await db.query(userQuery, [numero_documento]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Paciente no encontrado.' });
+    }
+
+    const patient = rows[0];
+
+    // 2. Nos aseguramos de que el usuario sea un paciente (rol_id = 2).
+    if (patient.rol_id !== 2) {
+      return res.status(403).json({ message: 'Acceso denegado.' });
+    }
+
+    // 3. Comparamos las fechas de nacimiento.
+    // La BD devuelve un objeto de fecha. Lo convertimos a 'YYYY-MM-DD' para una comparación segura.
+    const dobFromDB = new Date(patient.fecha_nacimiento).toISOString().split('T')[0];
+    if (dobFromDB !== fecha_nacimiento) {
+      return res.status(401).json({ message: 'Los datos no coinciden.' });
+    }
+
+    // 4. Si todo es correcto, generamos el token JWT.
+    const token = jwt.sign(
+      { userId: patient.id, role: patient.rol_id },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    res.status(200).json({
+      message: 'Login de paciente exitoso!',
+      token: token
+    });
+
+  } catch (error) {
+    console.error('Error en el login de paciente:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};

@@ -1,25 +1,37 @@
-// src/middleware/authMiddleware.js
+// src/middleware/authMiddleware.js - VERSIÓN DE DEPURACIÓN
+
 const jwt = require('jsonwebtoken');
 
 module.exports = function(req, res, next) {
-  // token de la cabecera 'Authorization'
-  const authHeader = req.header('Authorization');
+  console.log('--- Auth Middleware: ¡Petición recibida! ---');
 
-  // Si no hay token, denegamos el acceso
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Acceso denegado. No se proporcionó token.' });
+  const authHeader = req.header('Authorization');
+  
+  if (!authHeader) {
+    console.error('ERROR en Auth Middleware: No se encontró la cabecera "Authorization".');
+    return res.status(401).json({ message: 'Acceso denegado. Token no proporcionado.' });
+  }
+  
+  console.log('Auth Middleware: Cabecera encontrada:', authHeader);
+
+  if (!authHeader.startsWith('Bearer ')) {
+    console.error('ERROR en Auth Middleware: La cabecera no empieza con "Bearer ".');
+    return res.status(401).json({ message: 'Formato de token inválido.' });
   }
 
-  // Extraer el token (quitando "Bearer ")
   const token = authHeader.split(' ')[1];
+  console.log('Auth Middleware: Token extraído:', token);
 
-  // Verificar el token
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // Si el token es válido, `decoded` contiene el payload (userId, role)
+    
+    console.log('Auth Middleware: Token decodificado con ÉXITO:', decoded);
+    
     req.user = decoded;
-    next(); // Permite que la petición continúe hacia el controlador
+    next(); // ¡Pasa al siguiente nivel (el controlador)!
+
   } catch (ex) {
+    console.error('ERROR FATAL en Auth Middleware: El token es inválido o ha expirado.', ex);
     res.status(400).json({ message: 'Token inválido.' });
   }
 };
