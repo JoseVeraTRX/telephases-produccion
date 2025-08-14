@@ -1,5 +1,3 @@
-// src/pages/PatientListPage.js - VERSIÓN FINAL CON BOTÓN CORREGIDO
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -7,11 +5,11 @@ import './PatientList.css';
 import PatientExamsModal from '../components/PatientExamsModal';
 import { ReactComponent as Logo } from '../assets/logo-intelicare.svg';
 
-
 const PatientListPage = () => {
-  // --- ESTADOS Y LÓGICA (SIN CAMBIOS) ---
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedPatientExams, setSelectedPatientExams] = useState([]);
+  const [isModalLoading, setIsModalLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,6 +28,24 @@ const PatientListPage = () => {
     fetchPatients();
   }, []);
 
+  const openExamsModal = async (patient) => {
+    setSelectedPatient(patient);
+    setIsModalLoading(true);
+    try {
+      const response = await api.get(`/patients/${patient.id}/exams`);
+      setSelectedPatientExams(response.data);
+    } catch (error) {
+      console.error("Error al cargar los exámenes del paciente", error);
+    } finally {
+      setIsModalLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setSelectedPatient(null);
+    setSelectedPatientExams([]);
+  };
+
   const filteredAndSortedPatients = useMemo(() => {
     let result = [...patients];
     if (searchQuery) {
@@ -46,7 +62,6 @@ const PatientListPage = () => {
     return result;
   }, [patients, searchQuery, sortBy]);
   
-  
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     navigate('/login');
@@ -55,39 +70,28 @@ const PatientListPage = () => {
   return (
     <div className="results-page">
       <header className="header">
-        
-        <Logo className="header-logo" />
-
-        <h1 className="header-title">
-          <span className="material-symbols-outlined">group</span>
-          Lista de Pacientes
-        </h1>
-        {/* Rellenamos el botón con su contenido  */}
+        <div className="header-branding">
+          <Logo className="header-logo" />
+          <h1>Lista de Pacientes</h1>
+        </div>
         <button onClick={handleLogout} className="logout-button">
           <span className="material-symbols-outlined">logout</span>
           Cerrar Sesión
         </button>
       </header>
-
       <div className="toolbar">
         <form className="patient-search-form" onSubmit={(e) => e.preventDefault()}>
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre o cédula..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <input type="text" placeholder="Buscar por nombre o cédula..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           <button type="submit"><span className="material-symbols-outlined">search</span></button>
         </form>
         <div className="toolbar-actions">
+          <button onClick={() => navigate('/register-patient')} className="add-patient-button">
+          <span className="material-symbols-outlined">person_add</span> Registrar Paciente </button>
           <button onClick={() => setSortBy('recent')} className={sortBy === 'recent' ? 'active' : ''}>Más Recientes</button>
           <button onClick={() => setSortBy('name')} className={sortBy === 'name' ? 'active' : ''}>Ordenar A-Z</button>
-          <button onClick={fetchPatients} className="refresh-button" title="Actualizar lista">
-            <span className="material-symbols-outlined">refresh</span>
-          </button>
+          <button onClick={fetchPatients} className="refresh-button" title="Actualizar lista"><span className="material-symbols-outlined">refresh</span></button>
         </div>
       </div>
-      
       <div className="results-container">
         {isLoading ? ( <p className="results-message">Cargando pacientes...</p> ) : (
           <table className="results-table">
@@ -105,7 +109,7 @@ const PatientListPage = () => {
               {filteredAndSortedPatients.map((patient) => (
                 <tr key={patient.id}>
                   <td className="actions-cell">
-                    <button className="action-button" onClick={() => setSelectedPatient(patient)}>
+                    <button className="action-button" onClick={() => openExamsModal(patient)}>
                       <span className="material-symbols-outlined">visibility</span>
                     </button>
                   </td>
@@ -120,8 +124,7 @@ const PatientListPage = () => {
           </table>
         )}
       </div>
-
-      {selectedPatient && <PatientExamsModal patient={selectedPatient} onClose={() => setSelectedPatient(null)} />}
+      {selectedPatient && <PatientExamsModal patient={selectedPatient} exams={selectedPatientExams} isLoading={isModalLoading} onClose={closeModal} />}
     </div>
   );
 };

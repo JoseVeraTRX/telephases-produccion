@@ -1,0 +1,67 @@
+/* src/pages/RegisterPatient.css */
+.register-page {
+  padding: 30px;
+  max-width: 900px; /* Un poco más ancho para el formulario */
+  margin: 0 auto;
+}
+
+.register-form {
+  background: var(--white);
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Dos columnas */
+  gap: 20px 30px; /* Espacio vertical y horizontal */
+  margin-top: 30px;
+}
+
+/* Reutilizamos los estilos de .input-group que ya conocemos */
+.input-group {
+  margin-bottom: 0; /* Ya tenemos gap en el grid */
+}
+
+/* Hacemos que algunos campos ocupen las dos columnas */
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  grid-column: 1 / -1; /* Ocupa todo el ancho */
+  display: flex;
+  justify-content: flex-end; /* Alinea los botones a la derecha */
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--light-gray);
+}
+
+.cancel-button {
+  padding: 12px 25px;
+  border: 1px solid #ccc;
+  background: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* Reutilizamos la clase del botón de login */
+.submit-button {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--primary-green);
+  color: var(--white);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.submit-button:disabled {
+  background-color: #ccc;
+}
