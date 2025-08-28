@@ -1,0 +1,133 @@
+/* src/pages/Appointments.css */
+
+.status-cell {
+  padding: 8px 12px;
+  border-radius: 15px;
+  color: white;
+  font-weight: 500;
+  text-align: center;
+  font-size: 0.9em;
+  display: inline-block;
+}
+
+.status-Programada { background-color: #1e88e5; }
+.status-Confirmada { background-color: #43a047; }
+.status-Completada { background-color: #546e7a; }
+.status-Cancelada { background-color: #e53935; }
+
+.patient-info {
+  font-size: 1.1em;
+  padding: 15px;
+  background-color: var(--light-green-bg);
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+.patient-info strong {
+  color: var(--primary-green);
+}
+
+textarea, select[multiple] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--light-gray);
+  border-radius: 4px;
+  font-size: 16px;
+  font-family: var(--font-family-sans);
+}
+
+.exam-selection-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--light-gray);
+  border-radius: 4px;
+}
+
+.exam-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: 20px;
+  border: 1px solid var(--light-gray);
+  background-color: #f9f9f9; cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 14px;
+}
+.exam-chip .material-symbols-outlined { font-size: 18px; color: #777; transition: color 0.2s; }
+.exam-chip:hover { border-color: var(--primary-green); background-color: var(--light-green-bg); }
+.exam-chip.selected { background-color: var(--primary-green); color: var(--white); border-color: var(--primary-green); }
+.exam-chip.selected .material-symbols-outlined { color: var(--white); }
+
+.view-switcher {
+  display: flex;
+  background-color: #e9ecef;
+  border-radius: 8px;
+  padding: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.view-button {
+  background: none; border: none; padding: 8px 15px;
+  border-radius: 6px; cursor: pointer; display: flex;
+  align-items: center; gap: 8px; font-weight: 500;
+  color: #495057; transition: all 0.2s ease-in-out;
+}
+
+.view-button.active {
+  background-color: var(--white);
+  color: var(--primary-green);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transform: scale(1.05);
+}
+
+.calendar-container {
+  height: 75vh;
+}
+
+.rbc-event-custom {
+  padding: 2px 5px; border-radius: 4px;
+  color: white; background-color: #757575;
+  border: 1px solid rgba(0,0,0,0.2);
+  font-size: 0.8em;
+}
+
+/* Colores específicos para cada estado de la cita en el calendario*/
+.rbc-event-custom.status-Programada { background-color: #1e88e5; }
+.rbc-event-custom.status-Confirmada { background-color: #43a047; }
+.rbc-event-custom.status-Cancelada { background-color: #e53935; }
+.rbc-event-custom.status-Completada { background-color: #546e7a; }
+
+.custom-tooltip {
+  background: #333;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  max-width: 220px;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.tooltip-container {
+  z-index: 1050; /* Muy importante para que se vea por encima de todo */
+}
+
+.tooltip-arrow {
+  height: 8px;
+  width: 8px;
+  position: absolute;
+  background: var(--white);
+  pointer-events: none;
+}
+
+.tooltip-container[data-popper-placement^='top'] > .tooltip-arrow {
+  bottom: -4px;
+}
+.tooltip-container[data-popper-placement^='bottom'] > .tooltip-arrow {
+  top: -4px;
+}
+.tooltip-container[data-popper-placement^='left'] > .tooltip-arrow {
+  right: -4px;
+}
+.tooltip-container[data-popper-placement^='right'] > .tooltip-arrow {
+  left: -4px;
+}

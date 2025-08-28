@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import './PatientList.css';
+import './AdminDashboard.css';
 import { ReactComponent as Logo } from '../assets/logo-intelicare.svg';
 import ExamsTable from '../components/ExamsTable';
 

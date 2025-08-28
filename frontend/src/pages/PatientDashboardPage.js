@@ -81,6 +81,9 @@ const PatientDashboardPage = () => {
         </div>
         
         <div className="history-link">
+          <button onClick={() => navigate('/my-appointments')}>
+            Ver Mis Citas
+          </button>
           <button onClick={() => navigate('/patient-history')}>
             Ver Historial Completo de Exámenes
           </button>

@@ -15,7 +15,7 @@ exports.login = async (req, res) => {
     const userQuery = 'SELECT id, email, password_hash, rol_id FROM usuario WHERE email = $1 AND activo = TRUE';
     const { rows } = await db.query(userQuery, [email]);
 
-    // Si el email no se encuentra, se devuelve un error genérico para no dar pistas.
+    // Si el email no se encuentra, se devuelve un error genérico para no dar pistas y caer en faltas de seguridad.
     if (rows.length === 0) {
       return res.status(401).json({ message: 'Credenciales inválidas.' });
     }
@@ -58,10 +58,7 @@ exports.login = async (req, res) => {
   }
 };
 
-/**
- * Maneja el inicio de sesión para los pacientes.
- * Valida por número de documento y fecha de nacimiento.
- */
+// el login de PACIENTES
 exports.patientLogin = async (req, res) => {
   const { numero_documento, fecha_nacimiento } = req.body;
 

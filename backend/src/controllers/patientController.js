@@ -157,3 +157,19 @@ exports.registerPatient = async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };
+
+// Función para buscar un paciente por su número de documento
+exports.findPatientByDocument = async (req, res) => {
+  const { numero_documento } = req.params;
+  try {
+    const query = 'SELECT id, primer_nombre, primer_apellido FROM usuario WHERE numero_documento = $1 AND rol_id = 2';
+    const { rows } = await db.query(query, [numero_documento]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'No se encontró ningún paciente con ese número de documento.' });
+    }
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error('Error al buscar paciente por documento:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};

@@ -4,28 +4,29 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
-// Importamos nuestras rutas existentes
+// Importar las rutas
 const authRoutes = require('./src/routes/authRoutes');
 const resultsRoutes = require('./src/routes/resultsRoutes');
-
-// Importamos las nuevas rutas de pacientes
+const citasRoutes = require('./src/routes/citasRoutes');
 const patientRoutes = require('./src/routes/patientRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 const app = express();
 
-// Middleware (sin cambios)
+// Middleware 
 app.use(cors());
 app.use(express.json());
 
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/results', resultsRoutes);
-
-
-// Le decimos a la app que use las nuevas rutas bajo el prefijo /api/patients
 app.use('/api/patients', patientRoutes);
+app.use('/api/citas', citasRoutes);
+app.use('/api/admin', adminRoutes);
 
-// Ruta de bienvenida (sin cambios)
+
+
+// Ruta de bienvenida 
 app.get('/', (req, res) => {
   res.send('API de Telephases funcionando correctamente!');
 });

@@ -14,6 +14,9 @@ router.get('/', authMiddleware, patientController.getAllPatients);
 router.get('/me/dashboard', authMiddleware, patientController.getPatientDashboard);
 router.get('/me/exams', authMiddleware, patientController.getPatientExams);
 
+// Ruta para buscar un paciente específico por su cédula
+// GET /api/patients/documento/123456
+router.get('/documento/:numero_documento', authMiddleware, patientController.findPatientByDocument);
 
 // Ruta para que el ADMIN obtenga los exámenes de CUALQUIER paciente
 // GET /api/patients/:patientId/exams
