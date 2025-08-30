@@ -1,7 +1,56 @@
-// src/controllers/patientController.js - VERSIÓN FINAL Y COMPLETA
 const db = require('../services/db');
-const bcrypt = require('bcryptjs'); 
+const bcrypt = require('bcryptjs');
 
+const calculateTrends = (allRecentExams, examTypes) => {
+  const trends = {};
+
+  for (const examType of examTypes) {
+    const examsForType = allRecentExams.filter(e => e.tipo_examen_nombre === examType.nombre);
+    
+    if (examsForType.length < 2) {
+      trends[examType.nombre] = 'estable';
+      continue;
+    }
+
+    examsForType.sort((a, b) => new Date(a.fecha_creacion) - new Date(b.fecha_creacion));
+
+    const latestExam = examsForType[examsForType.length - 1];
+    const previousExams = examsForType.slice(0, examsForType.length - 1);
+
+    const parseValue = (exam) => {
+      if (!exam || !exam.valor) return null;
+      return parseFloat(exam.valor.split('/')[0]);
+    };
+    
+    const latestValue = parseValue(latestExam);
+    
+    if (previousExams.length === 0) {
+        trends[examType.nombre] = 'estable';
+        continue;
+    }
+    const avgPrevious = previousExams.reduce((sum, exam) => sum + parseValue(exam), 0) / previousExams.length;
+
+    if (latestValue === null || isNaN(latestValue) || isNaN(avgPrevious)) {
+      trends[examType.nombre] = 'estable';
+      continue;
+    }
+    
+    const difference = latestValue - avgPrevious;
+    const threshold = avgPrevious * 0.05;
+
+    const isHigherBetter = examType.nombre === 'OXYGEN_SATURATION';
+
+    if (Math.abs(difference) < threshold) {
+      trends[examType.nombre] = 'estable';
+    } else if (isHigherBetter) {
+      trends[examType.nombre] = difference > 0 ? 'mejora' : 'empeora';
+    } else {
+      trends[examType.nombre] = difference < 0 ? 'mejora' : 'empeora';
+    }
+  }
+
+  return trends;
+};
 
 exports.getAllPatients = async (req, res) => {
   try {
@@ -29,8 +78,12 @@ exports.getExamsByPatientId = async (req, res) => {
   const { patientId } = req.params;
   try {
     const query = `
-      SELECT ex.*, te.nombre as tipo_examen_nombre, es.codigo as estado_codigo, es.nombre as estado_nombre, 
-             es.emoji as estado_emoji, es.color as estado_color, u.primer_nombre, u.primer_apellido, u.numero_documento
+      SELECT 
+          ex.*,
+          te.nombre as tipo_examen_nombre,
+          es.codigo as estado_codigo, es.nombre as estado_nombre, 
+          es.emoji as estado_emoji, es.color as estado_color,
+          u.primer_nombre, u.primer_apellido, u.numero_documento
       FROM examen AS ex
       JOIN usuario AS u ON ex.usuario_id = u.id
       JOIN tipo_examen AS te ON ex.tipo_examen_id = te.id
@@ -46,56 +99,21 @@ exports.getExamsByPatientId = async (req, res) => {
   }
 };
 
-exports.getPatientDashboard = async (req, res) => {
-  const patientId = req.user.userId;
+exports.findPatientByDocument = async (req, res) => {
+  const { numero_documento } = req.params;
   try {
-    const patientQuery = 'SELECT primer_nombre, primer_apellido FROM usuario WHERE id = $1';
-    const patientResult = await db.query(patientQuery, [patientId]);
-    if (patientResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Paciente no encontrado.' });
+    const query = 'SELECT id, primer_nombre, primer_apellido FROM usuario WHERE numero_documento = $1 AND rol_id = 2';
+    const { rows } = await db.query(query, [numero_documento]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'No se encontró ningún paciente con ese número de documento.' });
     }
-    const examsQuery = `
-      SELECT DISTINCT ON (te.nombre) ex.*, te.nombre as tipo_examen_nombre, es.nombre as estado_nombre,
-             es.emoji as estado_emoji, es.color as estado_color
-      FROM examen AS ex
-      JOIN tipo_examen AS te ON ex.tipo_examen_id = te.id
-      LEFT JOIN estado_salud AS es ON ex.estado_salud_id = es.id
-      WHERE ex.usuario_id = $1 AND ex.activo = TRUE
-      ORDER BY te.nombre, ex.fecha_creacion DESC;
-    `;
-    const examsResult = await db.query(examsQuery, [patientId]);
-    res.status(200).json({
-      profile: patientResult.rows[0],
-      latestExams: examsResult.rows
-    });
+    res.status(200).json(rows[0]);
   } catch (error) {
-    console.error('Error al obtener datos del dashboard del paciente:', error);
+    console.error('Error al buscar paciente por documento:', error);
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };
 
-exports.getPatientExams = async (req, res) => {
-  const patientId = req.user.userId;
-  try {
-    const query = `
-      SELECT ex.*, te.nombre as tipo_examen_nombre, es.codigo as estado_codigo, es.nombre as estado_nombre, 
-             es.emoji as estado_emoji, es.color as estado_color, u.primer_nombre, u.primer_apellido, u.numero_documento
-      FROM examen AS ex
-      JOIN usuario AS u ON ex.usuario_id = u.id
-      JOIN tipo_examen AS te ON ex.tipo_examen_id = te.id
-      LEFT JOIN estado_salud AS es ON ex.estado_salud_id = es.id
-      WHERE ex.activo = TRUE AND ex.usuario_id = $1
-      ORDER BY ex.fecha_creacion DESC;
-    `;
-    const { rows } = await db.query(query, [patientId]);
-    res.status(200).json(rows);
-  } catch (error) {
-    console.error('Error al obtener el historial de exámenes del paciente:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
-  }
-};
-
-// Función para registrar un nuevo paciente
 exports.registerPatient = async (req, res) => {
   const {
     primer_nombre, segundo_nombre, primer_apellido, segundo_apellido,
@@ -108,14 +126,9 @@ exports.registerPatient = async (req, res) => {
   }
 
   try {
-    // --- LÓGICA DE GENERACIÓN AUTOMÁTICA ---
-    // 1. Generamos el username usando el patrón de la BD
     const username = `paciente_${numero_documento}`;
-    
-    // 2. Generamos el hash de la contraseña usando el documento como password por defecto
     const passwordHash = await bcrypt.hash(numero_documento, 10);
 
-    // --- CONSULTA INSERT FINAL Y COMPLETA ---
     const query = `
       INSERT INTO usuario (
         username, password_hash,
@@ -158,18 +171,80 @@ exports.registerPatient = async (req, res) => {
   }
 };
 
-// Función para buscar un paciente por su número de documento
-exports.findPatientByDocument = async (req, res) => {
-  const { numero_documento } = req.params;
+exports.getPatientDashboard = async (req, res) => {
+  const patientId = req.user.userId;
+
   try {
-    const query = 'SELECT id, primer_nombre, primer_apellido FROM usuario WHERE numero_documento = $1 AND rol_id = 2';
-    const { rows } = await db.query(query, [numero_documento]);
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'No se encontró ningún paciente con ese número de documento.' });
+    const patientQuery = db.query('SELECT primer_nombre, primer_apellido FROM usuario WHERE id = $1', [patientId]);
+    
+    const examsQuery = db.query(`
+      SELECT DISTINCT ON (te.nombre) ex.id, ex.titulo, ex.valor, ex.unidad, ex.fecha_creacion,
+             te.nombre as tipo_examen_nombre, es.nombre as estado_nombre,
+             es.emoji as estado_emoji, es.color as estado_color, es.nivel_urgencia
+      FROM examen AS ex
+      JOIN tipo_examen AS te ON ex.tipo_examen_id = te.id
+      LEFT JOIN estado_salud AS es ON ex.estado_salud_id = es.id
+      WHERE ex.usuario_id = $1 AND ex.activo = TRUE
+      ORDER BY te.nombre, ex.fecha_creacion DESC;
+    `, [patientId]);
+    
+    // --- CORRECCIÓN CLAVE AQUÍ ---
+    // Añadimos el prefijo 'examen.' a las columnas 'fecha_creacion' para eliminar la ambigüedad
+    const trendQuery = db.query(`
+      SELECT valor, te.nombre as tipo_examen_nombre, examen.fecha_creacion 
+      FROM examen 
+      JOIN tipo_examen te ON examen.tipo_examen_id = te.id
+      WHERE usuario_id = $1 AND examen.fecha_creacion >= NOW() - INTERVAL '15 days'
+    `, [patientId]);
+    
+    const allExamTypesQuery = db.query('SELECT nombre FROM tipo_examen');
+
+    const [
+      patientResult,
+      examsResult,
+      trendResult,
+      allExamTypesResult
+    ] = await Promise.all([patientQuery, examsQuery, trendQuery, allExamTypesQuery]);
+
+    if (patientResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Paciente no encontrado.' });
     }
-    res.status(200).json(rows[0]);
+    
+    const trends = calculateTrends(trendResult.rows, allExamTypesResult.rows);
+    
+    res.status(200).json({
+      profile: patientResult.rows[0],
+      latestExams: examsResult.rows,
+      trends: trends
+    });
+
   } catch (error) {
-    console.error('Error al buscar paciente por documento:', error);
+    console.error('Error al obtener datos del dashboard del paciente:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
+exports.getPatientExams = async (req, res) => {
+  const patientId = req.user.userId;
+  try {
+    const query = `
+      SELECT 
+          ex.*,
+          te.nombre as tipo_examen_nombre,
+          es.codigo as estado_codigo, es.nombre as estado_nombre, 
+          es.emoji as estado_emoji, es.color as estado_color,
+          u.primer_nombre, u.primer_apellido, u.numero_documento
+      FROM examen AS ex
+      JOIN usuario AS u ON ex.usuario_id = u.id
+      JOIN tipo_examen AS te ON ex.tipo_examen_id = te.id
+      LEFT JOIN estado_salud AS es ON ex.estado_salud_id = es.id
+      WHERE ex.activo = TRUE AND ex.usuario_id = $1
+      ORDER BY ex.fecha_creacion DESC;
+    `;
+    const { rows } = await db.query(query, [patientId]);
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error('Error al obtener el historial de exámenes del paciente:', error);
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };

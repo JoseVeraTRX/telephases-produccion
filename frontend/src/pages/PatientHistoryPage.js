@@ -1,16 +1,18 @@
-// src/pages/PatientHistoryPage.js - VERSIÓN FINAL Y CORRECTA
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import './AdminDashboard.css';
 import { ReactComponent as Logo } from '../assets/logo-intelicare.svg';
 import ExamsTable from '../components/ExamsTable';
+import ExamChartModal from '../components/ExamChart';
 
 const PatientHistoryPage = () => {
   const [exams, setExams] = useState([]);
   const [patientProfile, setPatientProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const [isChartVisible, setIsChartVisible] = useState(false);
+  const [chartExamType, setChartExamType] = useState(null);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -18,7 +20,6 @@ const PatientHistoryPage = () => {
       try {
         const response = await api.get('/patients/me/exams');
         setExams(response.data);
-
         if (response.data && response.data.length > 0) {
           const firstExam = response.data[0];
           setPatientProfile({
@@ -41,6 +42,11 @@ const PatientHistoryPage = () => {
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     navigate('/login');
+  };
+
+  const showChart = (examType) => {
+    setChartExamType(examType);
+    setIsChartVisible(true);
   };
   
   return (
@@ -67,8 +73,17 @@ const PatientHistoryPage = () => {
           exams={exams} 
           patient={patientProfile} 
           isLoading={isLoading} 
+          onShowChart={showChart}
         />
       </div>
+
+      {isChartVisible && (
+        <ExamChartModal
+          exams={exams}
+          examType={chartExamType}
+          onClose={() => setIsChartVisible(false)}
+        />
+      )}
     </div>
   );
 };

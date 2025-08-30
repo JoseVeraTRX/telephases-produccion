@@ -71,12 +71,10 @@ const AppointmentListPage = () => {
     if (setTriggerRef) setTriggerRef(e.currentTarget);
   };
 
-  // --- ESTA ES LA FUNCIÓN CORREGIDA ---
-  // Se ha eliminado la línea que causaba el error.
+  
   const handleEditFromPopover = () => {
     if (!selectedEvent) return;
     const citaId = selectedEvent.resource.cita_id;
-    // hideTooltip(); // <-- LÍNEA ELIMINADA
     navigate(`/edit-appointment/${citaId}`);
   };
   

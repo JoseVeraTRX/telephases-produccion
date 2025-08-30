@@ -1,11 +1,9 @@
-// src/components/ExamsTable.js - El Componente Reutilizable
+// src/components/ExamsTable.js
 
 import React from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { logoBase64 } from '../assets/logoBase64';
-
-// --- funciones constantes en ambos perfiles, eso nos invita a crear un componente para tener un solo archivo qué modificar en le futuro bro ---
 
 const getTranslatedStatusText = (statusName) => {
   if (typeof statusName !== 'string') return "Sin Datos";
@@ -20,17 +18,15 @@ const getTranslatedExamName = (examName) => {
 };
 
 const handleDownloadPDF = (exams, patient) => {
-  if (!exams || exams.length === 0) return;
+  if (!exams || exams.length === 0 || !patient) return;
   const doc = new jsPDF();
   doc.addImage(logoBase64, 'PNG', 14, 10, 40, 15);
   doc.setFontSize(20);
   doc.text(`Reporte de Exámenes de ${patient.primer_nombre} ${patient.primer_apellido}`, 14, 35);
   doc.setFontSize(12);
   doc.text(`Cédula: ${patient.numero_documento}`, 14, 42);
-  
   const mostUrgentExam = exams.reduce((a, b) => ((a.estado_nivel_urgencia || 0) > (b.estado_nivel_urgencia || 0) ? a : b), {});
   const headerColor = mostUrgentExam.estado_color || [82, 148, 107];
-
   autoTable(doc, {
     startY: 50,
     head: [['Estado', 'Tipo de Examen', 'Valor', 'Fecha', 'Observaciones']],
@@ -42,6 +38,7 @@ const handleDownloadPDF = (exams, patient) => {
 };
 
 const handleDownloadSinglePDF = (exam, patient) => {
+  if (!exam || !patient) return;
   const doc = new jsPDF();
   doc.addImage(logoBase64, 'PNG', 14, 10, 40, 15);
   doc.setFontSize(18);
@@ -50,9 +47,7 @@ const handleDownloadSinglePDF = (exam, patient) => {
   doc.text(`Paciente: ${patient.primer_nombre} ${patient.primer_apellido}`, 14, 42);
   doc.text(`Cédula: ${patient.numero_documento}`, 14, 49);
   doc.text(`Fecha: ${new Date(exam.fecha_creacion).toLocaleString()}`, 14, 56);
-  
   const headerColor = exam.estado_color || [82, 148, 107];
-
   autoTable(doc, {
     startY: 65,
     head: [['Campo', 'Valor']],
@@ -81,9 +76,7 @@ const renderIconForExam = (examName) => {
   return 'medical_information';
 };
 
-// --- EL COMPONENTE JSX (LA PARTE VISUAL) ---
-
-const ExamsTable = ({ exams, patient, isLoading }) => {
+const ExamsTable = ({ exams, patient, isLoading, onShowChart }) => {
   if (isLoading) {
     return <p className="results-message">Cargando exámenes...</p>;
   }
@@ -121,6 +114,14 @@ const ExamsTable = ({ exams, patient, isLoading }) => {
               <td>{new Date(exam.fecha_creacion).toLocaleDateString()}</td>
               <td className="observations-cell">{exam.observaciones}</td>
               <td className="actions-cell">
+                {/* --- NUEVO BOTÓN DE GRÁFICO --- */}
+                <button 
+                  className="action-button" 
+                  title="Ver gráfico de evolución"
+                  onClick={() => onShowChart(exam.tipo_examen_nombre)}
+                >
+                  <span className="material-symbols-outlined">show_chart</span>
+                </button>
                 <button className="action-button" title="Descargar PDF" onClick={() => handleDownloadSinglePDF(exam, patient)}>
                   <span className="material-symbols-outlined">picture_as_pdf</span>
                 </button>
