@@ -1,5 +1,3 @@
-// src/components/ExamsTable.js
-
 import React from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -13,11 +11,11 @@ const getTranslatedStatusText = (statusName) => {
 
 const getTranslatedExamName = (examName) => {
   if (typeof examName !== 'string') return "Desconocido";
-  const nameMap = { 'OXYGEN_SATURATION': 'Saturación de Oxígeno', 'BLOOD_PRESSURE': 'Presión Arterial', 'TEMPERATURE': 'Temperatura', 'GLUCOSE': 'Glucosa', 'HEART_RATE': 'Frecuencia Cardíaca', 'WEIGHT': 'Peso', 'BMI': 'Índice de Masa Corporal (IMC)', 'BLOOD_PRESSURE_DIASTOLIC': 'Presión Diastólica', 'BLOOD_PRESSURE_SYSTOLIC': 'Presión Sistólica' };
-  return nameMap[examName] || examName;
+  const nameMap = { 'OXYGEN_SATURATION': 'Saturación', 'BLOOD_PRESSURE': 'Presión Arterial', 'TEMPERATURE': 'Temperatura', 'GLUCOSE': 'Glucosa', 'HEART_RATE': 'Frec. Cardíaca', 'WEIGHT': 'Peso', 'BMI': 'IMC', 'BLOOD_PRESSURE_DIASTOLIC': 'Diastólica', 'BLOOD_PRESSURE_SYSTOLIC': 'Sistólica' };
+  return examName.split(', ').map(name => nameMap[name] || name).join(', ');
 };
 
-const handleDownloadPDF = (exams, patient) => {
+const handleDownloadPDF = async (exams, patient, trends, chartRefs) => {
   if (!exams || exams.length === 0 || !patient) return;
   const doc = new jsPDF();
   doc.addImage(logoBase64, 'PNG', 14, 10, 40, 15);
@@ -34,7 +32,38 @@ const handleDownloadPDF = (exams, patient) => {
     theme: 'grid',
     headStyles: { fillColor: headerColor },
   });
-  doc.save(`reporte_${patient.numero_documento}.pdf`);
+
+  if (chartRefs && chartRefs.current) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    for (const examType in trends) {
+      const chartComponent = chartRefs.current[examType];
+      if (chartComponent && typeof chartComponent.getImage === 'function') {
+        const chartImage = chartComponent.getImage();
+        if (chartImage) {
+          doc.addPage();
+          doc.addImage(logoBase64, 'PNG', 14, 10, 40, 15);
+          doc.setFontSize(16);
+          doc.text(`Evolución de ${getTranslatedExamName(examType)}`, 14, 30);
+          const trend = trends[examType];
+          doc.setFontSize(11);
+          if (trend === 'mejora') {
+              doc.setTextColor(34, 139, 34);
+              doc.text("Tendencia General: Mejora Sostenida", 14, 40);
+          } else if (trend === 'empeora') {
+              doc.setTextColor(220, 20, 60);
+              doc.text("Tendencia General: Empeoramiento Detectado", 14, 40);
+          } else {
+              doc.setTextColor(108, 117, 125);
+              doc.text("Tendencia General: Estable", 14, 40);
+          }
+          doc.setTextColor(0, 0, 0);
+          doc.addImage(chartImage, 'PNG', 15, 50, 180, 90);
+        }
+      }
+    }
+  }
+  
+  doc.save(`reporte_completo_${patient.numero_documento}.pdf`);
 };
 
 const handleDownloadSinglePDF = (exam, patient) => {
@@ -76,7 +105,7 @@ const renderIconForExam = (examName) => {
   return 'medical_information';
 };
 
-const ExamsTable = ({ exams, patient, isLoading, onShowChart }) => {
+const ExamsTable = ({ exams, patient, isLoading, onShowChart, trends, chartRefs, isModalView = false }) => {
   if (isLoading) {
     return <p className="results-message">Cargando exámenes...</p>;
   }
@@ -87,7 +116,7 @@ const ExamsTable = ({ exams, patient, isLoading, onShowChart }) => {
   return (
     <>
       <div className="table-actions">
-        <button onClick={() => handleDownloadPDF(exams, patient)} className="download-button">
+        <button onClick={() => handleDownloadPDF(exams, patient, trends, chartRefs)} className="download-button">
           <span className="material-symbols-outlined">download</span>
           Descargar Reporte Completo
         </button>
@@ -114,14 +143,15 @@ const ExamsTable = ({ exams, patient, isLoading, onShowChart }) => {
               <td>{new Date(exam.fecha_creacion).toLocaleDateString()}</td>
               <td className="observations-cell">{exam.observaciones}</td>
               <td className="actions-cell">
-                {/* --- NUEVO BOTÓN DE GRÁFICO --- */}
-                <button 
-                  className="action-button" 
-                  title="Ver gráfico de evolución"
-                  onClick={() => onShowChart(exam.tipo_examen_nombre)}
-                >
-                  <span className="material-symbols-outlined">show_chart</span>
-                </button>
+                {!isModalView && (
+                  <button 
+                    className="action-button" 
+                    title="Ver gráfico de evolución"
+                    onClick={() => onShowChart(exam.tipo_examen_nombre)}
+                  >
+                    <span className="material-symbols-outlined">show_chart</span>
+                  </button>
+                )}
                 <button className="action-button" title="Descargar PDF" onClick={() => handleDownloadSinglePDF(exam, patient)}>
                   <span className="material-symbols-outlined">picture_as_pdf</span>
                 </button>

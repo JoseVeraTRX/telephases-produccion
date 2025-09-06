@@ -21,7 +21,8 @@ const PatientDashboardPage = () => {
           api.get('/patients/me/exams')
         ]);
         setDashboardData(dashboardRes.data);
-        setAllExams(allExamsRes.data);
+        // --- ESTA ES LA CORRECCIÓN CLAVE ---
+        setAllExams(allExamsRes.data.exams);
       } catch (error) {
         console.error("Error al cargar los datos de la página", error);
       } finally {

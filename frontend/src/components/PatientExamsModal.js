@@ -16,6 +16,7 @@ const PatientExamsModal = ({ patient, exams, isLoading, onClose }) => {
             exams={exams} 
             patient={patient} 
             isLoading={isLoading}
+            isModalView={true} // <-- La clave: le decimos que oculte el botón de gráfico
           />
         </div>
       </div>

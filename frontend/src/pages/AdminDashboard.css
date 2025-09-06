@@ -1,10 +1,10 @@
-/* src/pages/Results.css */
-
+/* src/pages/AdminDashboard.css */
 .results-page {
   padding: 30px;
   max-width: 1400px;
   margin: 0 auto;
 }
+
 
 .header {
   display: flex;
@@ -22,7 +22,7 @@
 }
 
 .header-title .material-symbols-outlined {
-  color: var(--primary-green);
+  color: var(--primary-green-bg);
   font-size: 36px;
 }
 
@@ -382,4 +382,88 @@
 }
 .alert-info .exam-details {
   color: #555;
+}
+
+.actions-cell {
+  width: 120px; /* Un poco más de ancho */
+  text-align: center;
+}
+
+/* Contenedor para el gráfico que aparece en la página */
+.chart-display-container {
+  background-color: var(--white);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  margin-top: 40px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.chart-header h3 {
+  margin: 0;
+  color: var(--dark-primary);
+}
+
+.close-chart-btn {
+  background: none;
+  border: none;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: #aaa;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.close-chart-btn:hover {
+    color: #333;
+}
+
+.chart-wrapper {
+    margin-bottom: 30px;
+}
+
+.chart-wrapper h4 {
+    margin-bottom: 15px;
+    color: #555;
+}
+
+.back-to-top-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000; /* Asegura que esté por encima de otros elementos */
+  border: none;
+  background-color: #0d6efd; /* Color primario de ejemplo, ajústalo a tu paleta */
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, background-color 0.2s;
+  opacity: 1;
+}
+
+.back-to-top-button:hover {
+  background-color: #0a58ca; /* Un tono más oscuro para el hover */
+  transform: scale(1.1); /* Efecto de zoom al pasar el cursor */
+}
+
+.back-to-top-button:active {
+    transform: scale(1.0); /* Efecto de clic */
+}
+
+.back-to-top-button .material-symbols-outlined {
+  font-size: 28px; /* Tamaño del ícono */
 }

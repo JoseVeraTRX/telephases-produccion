@@ -27,5 +27,8 @@ router.put('/mis-citas/:citaId/cancel', authMiddleware, citasController.cancelMy
 // PUT /api/citas/:citaId/confirm
 router.put('/:citaId/confirm', authMiddleware, citasController.confirmCita);
 
+// Ruta para que el PACIENTE confirme una de sus citas
+// PUT /api/citas/mis-citas/123/confirm
+router.put('/mis-citas/:citaId/confirm', authMiddleware, citasController.confirmMyCita);
 
 module.exports = router;

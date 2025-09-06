@@ -188,8 +188,6 @@ exports.getPatientDashboard = async (req, res) => {
       ORDER BY te.nombre, ex.fecha_creacion DESC;
     `, [patientId]);
     
-    // --- CORRECCIÓN CLAVE AQUÍ ---
-    // Añadimos el prefijo 'examen.' a las columnas 'fecha_creacion' para eliminar la ambigüedad
     const trendQuery = db.query(`
       SELECT valor, te.nombre as tipo_examen_nombre, examen.fecha_creacion 
       FROM examen 
@@ -227,22 +225,37 @@ exports.getPatientDashboard = async (req, res) => {
 exports.getPatientExams = async (req, res) => {
   const patientId = req.user.userId;
   try {
-    const query = `
+    const examsQuery = db.query(`
       SELECT 
-          ex.*,
-          te.nombre as tipo_examen_nombre,
-          es.codigo as estado_codigo, es.nombre as estado_nombre, 
-          es.emoji as estado_emoji, es.color as estado_color,
-          u.primer_nombre, u.primer_apellido, u.numero_documento
+          ex.*, u.primer_nombre, u.primer_apellido, u.numero_documento,
+          te.nombre as tipo_examen_nombre, es.codigo as estado_codigo, 
+          es.nombre as estado_nombre, es.emoji as estado_emoji, es.color as estado_color
       FROM examen AS ex
       JOIN usuario AS u ON ex.usuario_id = u.id
       JOIN tipo_examen AS te ON ex.tipo_examen_id = te.id
       LEFT JOIN estado_salud AS es ON ex.estado_salud_id = es.id
       WHERE ex.activo = TRUE AND ex.usuario_id = $1
       ORDER BY ex.fecha_creacion DESC;
-    `;
-    const { rows } = await db.query(query, [patientId]);
-    res.status(200).json(rows);
+    `, [patientId]);
+
+    const trendQuery = db.query(`
+      SELECT valor, te.nombre as tipo_examen_nombre, examen.fecha_creacion 
+      FROM examen 
+      JOIN tipo_examen te ON examen.tipo_examen_id = te.id
+      WHERE usuario_id = $1 AND examen.fecha_creacion >= NOW() - INTERVAL '15 days'
+    `, [patientId]);
+    
+    const allExamTypesQuery = db.query('SELECT nombre FROM tipo_examen');
+
+    const [examsResult, trendResult, allExamTypesResult] = await Promise.all([examsQuery, trendQuery, allExamTypesQuery]);
+
+    const trends = calculateTrends(trendResult.rows, allExamTypesResult.rows);
+
+    res.status(200).json({
+      exams: examsResult.rows,
+      trends: trends
+    });
+
   } catch (error) {
     console.error('Error al obtener el historial de exámenes del paciente:', error);
     res.status(500).json({ message: 'Error interno del servidor.' });

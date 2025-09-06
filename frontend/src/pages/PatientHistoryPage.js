@@ -1,27 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import './AdminDashboard.css';
+import './PatientDashboard.css';
 import { ReactComponent as Logo } from '../assets/logo-intelicare.svg';
 import ExamsTable from '../components/ExamsTable';
-import ExamChartModal from '../components/ExamChart';
+import ExamChart from '../components/ExamChart';
 
 const PatientHistoryPage = () => {
   const [exams, setExams] = useState([]);
+  const [trends, setTrends] = useState({});
   const [patientProfile, setPatientProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const [isChartVisible, setIsChartVisible] = useState(false);
-  const [chartExamType, setChartExamType] = useState(null);
+  const [activeChartType, setActiveChartType] = useState(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  const chartContainerRef = useRef(null);
+  const chartRefs = useRef({});
 
   useEffect(() => {
     const fetchHistory = async () => {
       setIsLoading(true);
       try {
         const response = await api.get('/patients/me/exams');
-        setExams(response.data);
-        if (response.data && response.data.length > 0) {
-          const firstExam = response.data[0];
+        setExams(response.data.exams || []);
+        setTrends(response.data.trends || {});
+
+        if (response.data.exams && response.data.exams.length > 0) {
+          const firstExam = response.data.exams[0];
           setPatientProfile({
             primer_nombre: firstExam.primer_nombre,
             primer_apellido: firstExam.primer_apellido,
@@ -37,6 +44,16 @@ const PatientHistoryPage = () => {
       }
     };
     fetchHistory();
+
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowBackToTop(true);
+      } else {
+        setShowBackToTop(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleLogout = () => {
@@ -45,10 +62,26 @@ const PatientHistoryPage = () => {
   };
 
   const showChart = (examType) => {
-    setChartExamType(examType);
-    setIsChartVisible(true);
+    const newType = activeChartType === examType ? null : examType;
+    setActiveChartType(newType);
+
+    setTimeout(() => {
+      if (newType && chartContainerRef.current) {
+        chartContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
+  const getTranslatedExamName = (examName) => {
+    if (typeof examName !== 'string') return "Desconocido";
+    const nameMap = { 'OXYGEN_SATURATION': 'Saturación de Oxígeno', 'BLOOD_PRESSURE': 'Presión Arterial', 'TEMPERATURE': 'Temperatura', 'GLUCOSE': 'Glucosa', 'HEART_RATE': 'Frecuencia Cardíaca', 'WEIGHT': 'Peso', 'BMI': 'Índice de Masa Corporal (IMC)', 'BLOOD_PRESSURE_DIASTOLIC': 'Presión Diastólica', 'BLOOD_PRESSURE_SYSTOLIC': 'Presión Sistólica' };
+    return nameMap[examName] || examName;
+  };
+
   return (
     <div className="results-page">
       <header className="header">
@@ -74,15 +107,37 @@ const PatientHistoryPage = () => {
           patient={patientProfile} 
           isLoading={isLoading} 
           onShowChart={showChart}
+          trends={trends}
+          chartRefs={chartRefs}
         />
       </div>
 
-      {isChartVisible && (
-        <ExamChartModal
-          exams={exams}
-          examType={chartExamType}
-          onClose={() => setIsChartVisible(false)}
-        />
+      {activeChartType && (
+        <div ref={chartContainerRef} className="chart-display-container">
+            <div className="chart-header">
+                <h3>Evolución de {getTranslatedExamName(activeChartType)}</h3>
+                <button className="close-chart-btn" onClick={() => setActiveChartType(null)}>&times;</button>
+            </div>
+            <ExamChart exams={exams} examType={activeChartType} />
+        </div>
+      )}
+      
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', zIndex: -1, opacity: 0 }}>
+          {Object.keys(trends).map(examType => (
+              <div key={`chart-hidden-${examType}`} style={{ width: 600, height: 300, background: 'white' }}>
+                  <ExamChart
+                      ref={(el) => (chartRefs.current[examType] = el)}
+                      exams={exams} 
+                      examType={examType}
+                  />
+              </div>
+          ))}
+      </div>
+
+      {showBackToTop && (
+        <button onClick={scrollToTop} className="back-to-top-button">
+          <span className="material-symbols-outlined">arrow_upward</span>
+        </button>
       )}
     </div>
   );

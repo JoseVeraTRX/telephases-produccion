@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import './AdminDashboard.css';
 import PatientExamsModal from '../components/PatientExamsModal';
 import { ReactComponent as Logo } from '../assets/logo-intelicare.svg';
+import ExamChart from '../components/ExamChart';
 
 const AdminDashboardPage = () => {
   const [dashboardData, setDashboardData] = useState({ kpis: {}, alerts: [] });
@@ -15,6 +16,12 @@ const AdminDashboardPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
+  
+  const [activePatientForChart, setActivePatientForChart] = useState(null);
+  const chartContainerRef = useRef(null);
+
+  // --- NUEVO (1/4): Estado para controlar la visibilidad del botón "Volver Arriba" ---
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const fetchPageData = async () => {
     setIsLoading(true);
@@ -36,6 +43,21 @@ const AdminDashboardPage = () => {
     fetchPageData();
   }, []);
 
+  // --- NUEVO (2/4): Hook que escucha el scroll de la página para mostrar/ocultar el botón ---
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowBackToTop(true);
+      } else {
+        setShowBackToTop(false);
+      }
+    };
+    // Se añade el listener al montar el componente
+    window.addEventListener('scroll', handleScroll);
+    // Se elimina el listener al desmontar el componente para evitar fugas de memoria
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []); // El array vacío asegura que este efecto se ejecute solo una vez
+
   const openExamsModal = async (patient) => {
     setSelectedPatient(patient);
     setIsModalLoading(true);
@@ -54,12 +76,38 @@ const AdminDashboardPage = () => {
     setSelectedPatientExams([]);
   };
 
+  const handleShowChart = async (patient) => {
+    if (activePatientForChart && activePatientForChart.id === patient.id) {
+      setActivePatientForChart(null);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const response = await api.get(`/patients/${patient.id}/exams`);
+      setActivePatientForChart({ ...patient, exams: response.data });
+      setTimeout(() => {
+        // --- MODIFICACIÓN CLAVE: Cambiamos 'center' por 'end' ---
+        // Esto hace que la vista se desplace hasta el final del contenedor de los gráficos.
+        chartContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 100);
+    } catch (error) {
+      console.error("Error al cargar los exámenes para el gráfico", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // --- NUEVO (3/4): Función para desplazarse al inicio de la página ---
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const filteredAndSortedPatients = useMemo(() => {
     let result = [...patients];
     if (searchQuery) {
       result = result.filter(p => 
-        p.numero_documento.includes(searchQuery) ||
-        `${p.primer_nombre} ${p.primer_apellido}`.toLowerCase().includes(searchQuery.toLowerCase())
+        (p.numero_documento && p.numero_documento.includes(searchQuery)) ||
+        (`${p.primer_nombre} ${p.primer_apellido}`.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
     if (sortBy === 'recent') {
@@ -77,11 +125,15 @@ const AdminDashboardPage = () => {
 
   const getTranslatedExamName = (examName) => {
     if (typeof examName !== 'string') return "Desconocido";
-    const nameMap = {
-      'OXYGEN_SATURATION': 'Saturación de Oxígeno','BLOOD_PRESSURE': 'Presión Arterial','TEMPERATURE': 'Temperatura','GLUCOSE': 'Glucosa','HEART_RATE': 'Frecuencia Cardíaca','WEIGHT': 'Peso','BMI': 'Índice de Masa Corporal (IMC)','BLOOD_PRESSURE_DIASTOLIC': 'Presión Diastólica','BLOOD_PRESSURE_SYSTOLIC': 'Presión Sistólica',
-    };
+    const nameMap = { 'OXYGEN_SATURATION': 'Saturación', 'BLOOD_PRESSURE': 'Presión Arterial', 'TEMPERATURE': 'Temperatura', 'GLUCOSE': 'Glucosa', 'HEART_RATE': 'Frec. Cardíaca', 'WEIGHT': 'Peso', 'BMI': 'IMC', 'BLOOD_PRESSURE_DIASTOLIC': 'Diastólica', 'BLOOD_PRESSURE_SYSTOLIC': 'Sistólica'};
     return nameMap[examName] || examName;
   };
+
+  const uniqueExamTypesForPatient = useMemo(() => {
+      if(!activePatientForChart || !activePatientForChart.exams) return [];
+      const examNames = activePatientForChart.exams.map(e => e.tipo_examen_nombre);
+      return [...new Set(examNames)];
+  }, [activePatientForChart]);
 
   return (
     <div className="results-page">
@@ -101,7 +153,7 @@ const AdminDashboardPage = () => {
             </button>
         </div>
       </header>
-
+      
       <div className="dashboard-section">
         <div className="kpi-grid">
           <div className="kpi-card">
@@ -154,21 +206,17 @@ const AdminDashboardPage = () => {
           </div>
         </div>
       )}
-
+      
       <div className="toolbar">
         <form className="patient-search-form" onSubmit={(e) => e.preventDefault()}>
           <input type="text" placeholder="Buscar en lista de pacientes..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-          <button type="submit"><span className="material-symbols-outlined">search</span></button>
+          <button type="submit"><span className="material-symbols-outlined">search</span></button>t
         </form>
         <div className="toolbar-actions">
-          <button onClick={() => navigate('/register-patient')} className="add-patient-button">
-            <span className="material-symbols-outlined">person_add</span> Registrar Paciente 
-          </button>
-          <button onClick={() => setSortBy('recent')} className={sortBy === 'recent' ? 'active' : ''}>Más Recientes</button>
-          <button onClick={() => setSortBy('name')} className={sortBy === 'name' ? 'active' : ''}>Ordenar A-Z</button>
-          <button onClick={fetchPageData} className="refresh-button" title="Actualizar todo">
-            <span className="material-symbols-outlined">refresh</span>
-          </button>
+          <button onClick={() => navigate('/register-patient')} className="add-patient-button"><span className="material-symbols-outlined">person_add</span> Registrar Paciente</button>
+          <button onClick={() => setSortBy('recent')} className={`button-base button-tertiary ${sortBy === 'recent' ? 'active' : ''}`}>Más Recientes</button>
+          <button onClick={() => setSortBy('name')} className={`button-base button-tertiary ${sortBy === 'name' ? 'active' : ''}`}>Ordenar A-Z</button>
+          <button onClick={fetchPageData} className="button-base button-tertiary" title="Actualizar todo"><span className="material-symbols-outlined">refresh</span></button>
         </div>
       </div>
       <div className="results-container">
@@ -176,34 +224,62 @@ const AdminDashboardPage = () => {
           <table className="results-table">
             <thead>
               <tr>
-                <th className="actions-cell">Ver Exámenes</th>
                 <th>Nombre</th>
                 <th>Apellido</th>
                 <th>Cédula</th>
                 <th>N° de Exámenes</th>
                 <th>Último Examen</th>
+                <th className="actions-cell">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredAndSortedPatients.map((patient) => (
                 <tr key={patient.id}>
-                  <td className="actions-cell">
-                    <button className="action-button" onClick={() => openExamsModal(patient)}>
-                      <span className="material-symbols-outlined">visibility</span>
-                    </button>
-                  </td>
                   <td>{patient.primer_nombre} {patient.segundo_nombre}</td>
                   <td>{patient.primer_apellido} {patient.segundo_apellido}</td>
                   <td>{patient.numero_documento}</td>
                   <td>{patient.exam_count}</td>
                   <td>{patient.last_exam_date ? new Date(patient.last_exam_date).toLocaleDateString() : 'N/A'}</td>
+                  <td className="actions-cell">
+                    <button className="action-button" title="Ver tabla de exámenes" onClick={() => openExamsModal(patient)}>
+                      <span className="material-symbols-outlined">visibility</span>
+                    </button>
+                    <button className="action-button" title="Ver gráficos de evolución" onClick={() => handleShowChart(patient)}>
+                      <span className="material-symbols-outlined">show_chart</span>
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {activePatientForChart && (
+        <div ref={chartContainerRef} className="chart-display-container">
+            <div className="chart-header">
+                <h3>Evolución de {activePatientForChart.primer_nombre} {activePatientForChart.primer_apellido}</h3>
+                <button className="close-chart-btn" onClick={() => setActivePatientForChart(null)}>&times;</button>
+            </div>
+            {isModalLoading ? <p className="results-message">Cargando gráficos...</p> : (
+                uniqueExamTypesForPatient.map(examType => (
+                    <div key={examType} className="chart-wrapper">
+                        <h4>{getTranslatedExamName(examType)}</h4>
+                        <ExamChart exams={activePatientForChart.exams} examType={examType} />
+                    </div>
+                ))
+            )}
+        </div>
+      )}
+      
       {selectedPatient && <PatientExamsModal patient={selectedPatient} exams={selectedPatientExams} isLoading={isModalLoading} onClose={closeModal} />}
+      
+      {/* --- NUEVO (4/4): Renderizado condicional del botón para subir --- */}
+      {showBackToTop && (
+        <button onClick={scrollToTop} className="back-to-top-button" title="Volver arriba">
+          <span className="material-symbols-outlined">arrow_upward</span>
+        </button>
+      )}
     </div>
   );
 };

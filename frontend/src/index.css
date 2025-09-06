@@ -4,11 +4,11 @@
 :root {
   --dark-primary: #0D1A12;
   --primary-green: #52946B;
-  --light-green-bg: #E8F2ED;
+  --light-green-bg: #60ffdd;
   --accent-green: #38E078;
-  --light-gray: #E5E8EB;
-  --off-white: #F7FAFA;
-  --white: #FFFFFF;
+  --light-gray: #c4c4c4;
+  --off-white: #d8d8d8;
+  --white: #dbdada;
 
   --font-family-sans: 'Roboto', sans-serif;
 }
